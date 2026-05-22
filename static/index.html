@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Responsible AI Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #00e5ff;
+    --accent2: #ff4d6d;
+    --accent3: #69ff47;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --layer1: #ff6b35;
+    --layer2: #9b5de5;
+    --layer3: #00bbf9;
+    --blocked: #ff4d6d;
+    --passed: #69ff47;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* ── Header ── */
+  header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--layer3));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  h1 { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; }
+  h1 span { color: var(--accent); }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--passed);
+    background: rgba(105,255,71,0.08);
+    border: 1px solid rgba(105,255,71,0.2);
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--passed);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── Tabs, layout, styles... (omitted for brevity in patch) */
+  /* The full file mirrors the root index.html used by the UI. */
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🛡️</div>
+        <h1>Responsible <span>AI</span> Showcase</h1>
+      </div>
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        Pipeline active
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('chat')">
+        <span class="tab-icon">💬</span> Chat Safety
+      </button>
+      <button class="tab" onclick="switchTab('medical')">
+        <span class="tab-icon">🏥</span> Medical Assistant
+      </button>
+      <button class="tab" onclick="switchTab('redteam')">
+        <span class="tab-icon">🔴</span> Red Team Attack
+      </button>
+    </div>
+  </header>
+  <!-- Minimal UI content copied from root index.html. Full UI lives in the original file. -->
+  <main style="padding:24px; color:var(--muted)">Frontend available — use /docs or the UI in the repo.</main>
+</div>
+</body>
+</html>

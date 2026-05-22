@@ -1,64 +1,50 @@
 # main.py
-# ─────────────────────────────────────────────────────────────────────────────
-# The entry point — wires all 3 layers together.
-#
-# .NET analogy:
-#   Program.cs + a single controller with one POST endpoint.
-#   FastAPI's @app.post() decorator = [HttpPost] attribute.
-#   The function parameters with type hints = model binding.
-# ─────────────────────────────────────────────────────────────────────────────
-
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from models.schemas import ChatRequest, ChatResponse, BlockedResponse, SafetyCheckResult
 from middleware.content_safety import check_input
 from middleware.foundry_model import call_model
 from middleware.groundedness import check_groundedness
+from routers import medical, redteam
 
-# ── App setup ─────────────────────────────────────────────────────────────────
-# Like builder.Services + app.Build() in one line
 app = FastAPI(
-    title="Multi-layer Content Safety Pipeline",
-    description="Demo: Azure AI Content Safety + Foundry Guardrails + Groundedness Detection",
+    title="Responsible AI Showcase",
+    description="Multi-layer Content Safety: Azure AI Content Safety + Foundry Guardrails + Groundedness",
     version="1.0.0"
 )
 
+# ── Register routers ──────────────────────────────────────────────────────────
+# .NET analogy: app.MapControllers() — registers all route groups
+app.include_router(medical.router)
+app.include_router(redteam.router)
+
+# ── Serve the frontend ────────────────────────────────────────────────────────
+# Serves static/index.html at http://localhost:8000
+# .NET analogy: app.UseStaticFiles()
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
 
 # ── Health check ──────────────────────────────────────────────────────────────
-
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
 
-# ── Main endpoint ─────────────────────────────────────────────────────────────
-
+# ── Main chat endpoint ────────────────────────────────────────────────────────
 @app.post(
     "/chat",
-    response_model=ChatResponse,          # returned when all layers pass
+    response_model=ChatResponse,
     responses={
-        400: {"model": BlockedResponse},  # returned when a layer blocks
+        400: {"model": BlockedResponse},
         500: {"description": "Internal error"}
     }
 )
 async def chat(request: ChatRequest):
-    """
-    Processes a chat message through 3 safety layers:
-
-    1. Azure AI Content Safety  — scans the raw user input
-    2. Foundry Guardrails       — enforced automatically by the platform
-    3. Groundedness Detection   — checks if the answer is based in fact
-
-    Returns the safe answer or a 400 with details of what was blocked and why.
-    """
-
     layers_passed: list[SafetyCheckResult] = []
 
-    # ── LAYER 1: Input scan ───────────────────────────────────────────────────
-    # Runs BEFORE the model sees anything.
-    # If this blocks, we never make a model call (saves money + latency).
-
+    # LAYER 1 — Content Safety
     layer1 = await check_input(request.user_message)
     layers_passed.append(layer1)
 
@@ -73,10 +59,7 @@ async def chat(request: ChatRequest):
             ).model_dump()
         )
 
-    # ── LAYER 2: Model call + Guardrails ──────────────────────────────────────
-    # Sends to Foundry. Guardrails run on the platform automatically.
-    # A BadRequestError with code "content_filter" = Guardrail fired.
-
+    # LAYER 2 — Foundry model + Guardrails
     layer2, model_answer = await call_model(
         user_message=request.user_message,
         system_prompt=request.system_prompt,
@@ -94,10 +77,7 @@ async def chat(request: ChatRequest):
             ).model_dump()
         )
 
-    # ── LAYER 3: Groundedness check ───────────────────────────────────────────
-    # Runs on the model's OUTPUT to catch hallucinations.
-    # Skipped automatically if no source_documents were provided.
-
+    # LAYER 3 — Groundedness
     layer3 = await check_groundedness(
         query=request.user_message,
         answer=model_answer,
@@ -114,8 +94,6 @@ async def chat(request: ChatRequest):
             ).model_dump()
         )
 
-    # ── All layers passed — return the safe answer ─────────────────────────────
-
     return ChatResponse(
         answer=model_answer,
         layers_passed=layers_passed,
@@ -123,7 +101,6 @@ async def chat(request: ChatRequest):
     )
 
 
-# ── Run directly with: python main.py ─────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
